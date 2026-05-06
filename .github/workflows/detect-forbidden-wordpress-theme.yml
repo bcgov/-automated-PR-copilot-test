@@ -13,18 +13,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Scan diff for forbidden WordPress theme attribute
+      - name: Install Copilot CLI
         run: |
-          # Ensure the PR base branch ref exists locally.
-          git fetch origin "${{ github.base_ref }}" --depth=1
-          diff_output=$(git diff --no-color "origin/${{ github.base_ref }}...HEAD")
-          matches=$(printf "%s\n" "$diff_output" | rg '^\+.*"theme"\s*:\s*"design-system-wordpress-theme"' || true)
+          curl -fsSL https://gh.io/copilot-install | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-          if [ -n "$matches" ]; then
-            echo "::error title=Forbidden WordPress theme detected::Found 'theme:\"design-system-wordpress-theme\"' in added lines. Remove or replace it before merging."
-            echo "Offending added lines:"
-            echo "$matches"
-            exit 1
-          fi
-
-          echo "No forbidden WordPress theme usage detected in added lines."
+      - name: Run Copilot Theme Check
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: |
+          copilot \
+            --prompt "Scan the diff for any WordPress block markup containing a 'theme' attribute equal to 'design-system-wordpress-theme' in lines like this <!-- wp:template-part {"slug":"breadcrumb","align":"full","theme":"design-system-wordpress-theme"} /-->. If found, output ONLY the list of offending lines and exit with a nonzero status." \
+            --fail-on "design-system-wordpress-theme"
