@@ -32,6 +32,15 @@ jobs:
           echo "$output"
 
           if [ $status -ne 0 ]; then
+<<<<<<< Updated upstream
             echo "::error title=Forbidden WordPress theme detected::Found 'design-system-wordpress-theme' in this PR. Remove or replace it before merging. Offending lines are printed above."
+=======
+            if echo "$output" | rg -q "design-system-wordpress-theme"; then
+              echo "::error title=Forbidden WordPress theme detected::Found 'design-system-wordpress-theme' in this PR. Remove or replace it before merging. Offending lines are printed above."
+              exit 1
+            fi
+
+            echo "::error title=Theme check tool failed::Copilot CLI did not complete successfully (token/install/network/runtime issue). This is not necessarily a forbidden-theme match. See logs above."
+>>>>>>> Stashed changes
             exit 1
           fi
