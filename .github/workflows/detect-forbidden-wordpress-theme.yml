@@ -17,35 +17,6 @@ jobs:
         run: |
           # Ensure the PR base branch ref exists locally.
           git fetch origin "${{ github.base_ref }}" --depth=1
-
-<<<<<<< Updated upstream
-      - name: Run Copilot Theme Check
-        env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-        run: |
-          set +e
-          output=$(copilot \
-            --prompt "Scan the diff for any WordPress block markup containing a 'theme' attribute equal to 'design-system-wordpress-theme'. If found, output ONLY the list of offending lines and exit with a nonzero status." \
-            --fail-on "design-system-wordpress-theme" 2>&1)
-          status=$?
-          set -e
-
-          echo "$output"
-
-          if [ $status -ne 0 ]; then
-<<<<<<< Updated upstream
-            echo "::error title=Forbidden WordPress theme detected::Found 'design-system-wordpress-theme' in this PR. Remove or replace it before merging. Offending lines are printed above."
-=======
-            if echo "$output" | rg -q "design-system-wordpress-theme"; then
-              echo "::error title=Forbidden WordPress theme detected::Found 'design-system-wordpress-theme' in this PR. Remove or replace it before merging. Offending lines are printed above."
-              exit 1
-            fi
-
-            echo "::error title=Theme check tool failed::Copilot CLI did not complete successfully (token/install/network/runtime issue). This is not necessarily a forbidden-theme match. See logs above."
->>>>>>> Stashed changes
-            exit 1
-          fi
-=======
           diff_output=$(git diff --no-color "origin/${{ github.base_ref }}...HEAD")
           matches=$(printf "%s\n" "$diff_output" | rg '^\+.*"theme"\s*:\s*"design-system-wordpress-theme"' || true)
 
@@ -57,4 +28,3 @@ jobs:
           fi
 
           echo "No forbidden WordPress theme usage detected in added lines."
->>>>>>> Stashed changes
