@@ -22,6 +22,16 @@ jobs:
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
         run: |
-          copilot \
+          set +e
+          output=$(copilot \
             --prompt "Scan the diff for any WordPress block markup containing a 'theme' attribute equal to 'design-system-wordpress-theme'. If found, output ONLY the list of offending lines and exit with a nonzero status." \
-            --fail-on "design-system-wordpress-theme"
+            --fail-on "design-system-wordpress-theme" 2>&1)
+          status=$?
+          set -e
+
+          echo "$output"
+
+          if [ $status -ne 0 ]; then
+            echo "::error title=Forbidden WordPress theme detected::Found 'design-system-wordpress-theme' in this PR. Remove or replace it before merging. Offending lines are printed above."
+            exit 1
+          fi
