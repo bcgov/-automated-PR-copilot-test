@@ -1,0 +1,27 @@
+name: Detect Forbidden WordPress Theme Usage
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  theme-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Copilot CLI
+        run: |
+          curl -fsSL https://gh.io/copilot-install | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Run Copilot Theme Check
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: |
+          copilot \
+            --prompt "Scan the diff for any WordPress block markup containing a 'theme' attribute equal to 'design-system-wordpress-theme'. If found, output ONLY the list of offending lines and exit with a nonzero status." \
+            --fail-on "design-system-wordpress-theme"
