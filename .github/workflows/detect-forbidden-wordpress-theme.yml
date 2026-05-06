@@ -22,6 +22,28 @@ jobs:
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
         run: |
-          copilot \
-            --prompt "Scan the diff for any WordPress block markup containing a 'theme' attribute equal to 'design-system-wordpress-theme' in lines like this <!-- wp:template-part {"slug":"breadcrumb","align":"full","theme":"design-system-wordpress-theme"} /-->. If found, output ONLY the list of offending lines and exit with a nonzero status." \
-            --fail-on "design-system-wordpress-theme"
+          set +e
+          output=$(copilot \
+            --prompt "Scan the current pull request diff only. Check for WordPress block markup that contains a JSON attribute named \"theme\" with value \"design-system-wordpress-theme\". If any are found, print FORBIDDEN_THEME_FOUND on its own line, then print only the offending added lines. If none are found, print NO_FORBIDDEN_THEME_FOUND on its own line." 2>&1)
+          status=$?
+          set -e
+
+          echo "$output"
+
+          if [ $status -ne 0 ]; then
+            echo "::error title=Theme check tool failed::Copilot CLI failed to run (install/auth/network/runtime issue). See logs above."
+            exit 1
+          fi
+
+          if printf "%s\n" "$output" | rg -q "^FORBIDDEN_THEME_FOUND$"; then
+            echo "::error title=Forbidden WordPress theme detected::Found theme=\"design-system-wordpress-theme\" in this PR diff. Remove or replace it before merging. Offending lines are printed above."
+            exit 1
+          fi
+
+          if printf "%s\n" "$output" | rg -q "^NO_FORBIDDEN_THEME_FOUND$"; then
+            echo "No forbidden WordPress theme usage detected."
+            exit 0
+          fi
+
+          echo "::error title=Unexpected Copilot output::Copilot did not return an expected sentinel result. See logs above."
+          exit 1
