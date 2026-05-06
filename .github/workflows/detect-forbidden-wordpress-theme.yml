@@ -13,11 +13,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Copilot CLI
+      - name: Scan diff for forbidden WordPress theme attribute
         run: |
-          curl -fsSL https://gh.io/copilot-install | bash
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          # Ensure the PR base branch ref exists locally.
+          git fetch origin "${{ github.base_ref }}" --depth=1
 
+<<<<<<< Updated upstream
       - name: Run Copilot Theme Check
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
@@ -44,3 +45,16 @@ jobs:
 >>>>>>> Stashed changes
             exit 1
           fi
+=======
+          diff_output=$(git diff --no-color "origin/${{ github.base_ref }}...HEAD")
+          matches=$(printf "%s\n" "$diff_output" | rg '^\+.*"theme"\s*:\s*"design-system-wordpress-theme"' || true)
+
+          if [ -n "$matches" ]; then
+            echo "::error title=Forbidden WordPress theme detected::Found 'theme:\"design-system-wordpress-theme\"' in added lines. Remove or replace it before merging."
+            echo "Offending added lines:"
+            echo "$matches"
+            exit 1
+          fi
+
+          echo "No forbidden WordPress theme usage detected in added lines."
+>>>>>>> Stashed changes
