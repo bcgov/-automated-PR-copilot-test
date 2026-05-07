@@ -25,7 +25,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN || github.token }}
         run: |
           git fetch origin "${{ github.base_ref }}" --depth=1
+<<<<<<< Updated upstream
           diff_output=$(git diff --no-color "origin/${{ github.base_ref }}...HEAD")
+=======
+          added_lines=$(
+            git diff --no-color "origin/${{ github.base_ref }}...HEAD" -- 'parts/*.html' 'templates/**/*.html' \
+            | grep '^+' \
+            | grep -v '^+++'
+          )
+>>>>>>> Stashed changes
 
           prompt=$(cat <<'EOF'
           Analyze ONLY the provided git diff.
